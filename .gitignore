@@ -1,0 +1,5 @@
+*.o
+phase_extract
+__pycache__/
+*.pyc
+.DS_Store
