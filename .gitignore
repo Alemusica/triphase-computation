@@ -2,6 +2,8 @@
 phase_extract
 phase_v2
 phi_exploit
+phi_uniform
+phi_adaptive
 __pycache__/
 *.pyc
 .DS_Store
