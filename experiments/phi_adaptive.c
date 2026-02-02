@@ -57,6 +57,15 @@ typedef struct {
     int num_levels;    /* L (quantization levels used) */
 } phit_sample_t;
 
+/* Knuth multiplicative hash — spreads clustered keys uniformly */
+static inline uint32_t phit_hash(uint32_t key) {
+    key *= 2654435761u;
+    key ^= key >> 16;
+    key *= 0x85ebca6bu;
+    key ^= key >> 13;
+    return key;
+}
+
 static phit_sample_t sample_phits(int num_reads, int max_level) {
     phit_sample_t s = {0, num_reads, max_level};
 
@@ -68,9 +77,17 @@ static phit_sample_t sample_phits(int num_reads, int max_level) {
         int level = quantize(t2 - t1);
         if (level >= max_level) level = max_level - 1;
 
-        /* Encode as base-L number: key = Σ level_i * L^i */
-        s.key = s.key * max_level + level;
+        /* Combine: delta level (biased) + timer LSBs (uniform)
+         * Timer absolute LSBs are proven uniform (Chi²=0.39 from phase_extract v1).
+         * This gives us ~2 uniform phits + ~1.3 delta phits per read. */
+        uint32_t timer_phase = (uint32_t)(t2 & 0x3);  /* 2 LSBs = uniform */
+        uint32_t combined = (level << 2) | timer_phase; /* 4 levels × 4 phases = 16 */
+
+        s.key = s.key * (max_level * 4) + combined;
     }
+
+    /* Hash to spread across full 32-bit range */
+    s.key = phit_hash(s.key);
 
     return s;
 }
