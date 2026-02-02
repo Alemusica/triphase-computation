@@ -7,6 +7,7 @@ phi_adaptive
 phit_prng
 phit_crypto
 phit_scheduler
+test_libphit
 __pycache__/
 *.pyc
 .DS_Store
