@@ -3,6 +3,8 @@
 Computational model that treats phase relationships between asynchronous clocks
 as an exploitable information resource, not noise to eliminate.
 
+**phit** (phase-bit): unit of information extracted from clock phase relationships.
+
 ## Core Idea
 
 ```
@@ -20,11 +22,18 @@ a third *observes* and *computes* based on the phase relationship.
 ```
 triphase-computation/
 ├── src/
-│   └── triphase_sim.py       # Core simulator (Clock, TriphaseSystem, VM)
+│   ├── triphase_sim.py        # Core simulator (Clock, TriphaseSystem, VM)
+│   ├── phit_prng.c            # PRNG from phase entropy (NIST tests pass)
+│   ├── phit_crypto.c          # Phase-gated encryption PoC
+│   └── phit_scheduler.c       # Lock-free task dispatch via phits
 ├── experiments/
-│   ├── phase_extract.c        # Hardware phase extraction (M1 Max / x86)
-│   ├── practical_test.py      # Benchmark suite (6 tests)
-│   └── beat_visualizer.py     # ASCII visualization of beat patterns
+│   ├── phase_extract.c        # Hardware phase extraction v1 (cntvct_el0)
+│   ├── phase_extract_v2.c     # v2 (mach_absolute_time + clock_gettime)
+│   ├── phi_exploit.c          # Phit maximization tests
+│   ├── phi_uniform.c          # CDF-based routing (non-stationary finding)
+│   ├── phi_adaptive.c         # Adaptive compound-key routing
+│   ├── practical_test.py      # Python benchmark suite (6 tests)
+│   └── beat_visualizer.py     # ASCII beat pattern visualization
 └── docs/
     └── THEORY.md              # Theoretical framework (CPE)
 ```
@@ -32,15 +41,14 @@ triphase-computation/
 ## Quick Start
 
 ```bash
-# Run the benchmark suite
+# Applications
+gcc -O0 -o phit_prng src/phit_prng.c -lm && ./phit_prng
+gcc -O0 -o phit_crypto src/phit_crypto.c -lm && ./phit_crypto
+gcc -O0 -o phit_scheduler src/phit_scheduler.c -lm -lpthread && ./phit_scheduler
+
+# Experiments
+gcc -O0 -o phi_adaptive experiments/phi_adaptive.c -lm && ./phi_adaptive
 python3 experiments/practical_test.py
-
-# Visualize beat patterns
-python3 experiments/beat_visualizer.py
-
-# Hardware test (compile on M1 Max)
-gcc -O0 -o phase_extract experiments/phase_extract.c -lm
-./phase_extract
 ```
 
 ## Three Paradigms
@@ -48,20 +56,40 @@ gcc -O0 -o phase_extract experiments/phase_extract.c -lm
 | # | Paradigm | Idea | Gain |
 |---|----------|------|------|
 | 1 | Phase-Gated | Compute only at sync points | Temporal filtering |
-| 2 | Phase-Weighted | Phase as arithmetic coefficient | Same code → different results |
+| 2 | Phase-Weighted | Phase as arithmetic coefficient | Same code, different results |
 | 3 | Phase-Encoded | N values in 1 register via time-division | Nx memory density |
 
-## Key Results (Simulation)
+## Applications
 
-- **Memory density**: 8 slots/register = 3 extra bits = 8x values
-- **Sync bonus**: ~2x throughput at beat alignment points
-- **Hidden parallelism**: 1 sequential stream → 4 independent computations
-- **Theoretical max on M1 Max**: ~7.1 extra bits/register (134 distinguishable phases)
+### Phit PRNG
+Random number generator using phits as entropy source.
+All NIST SP 800-22 tests pass: monobit, runs, byte distribution, per-bit entropy.
+Throughput: **181 Mbit/s** (22.6 MB/s).
 
-## Hardware
+### Phit Crypto
+Phase-gated encryption where the "key" is not stored — it's the moment in time
+multiplied by clock frequency relationships. 1 microsecond timing error = garbage output.
 
-Designed for Apple Silicon M1 Max with ARM timer (`cntvct_el0`, 24 MHz)
-as external observer clock. Works on x86 via TSC as well.
+### Phit Scheduler
+Lock-free task dispatch: routes tasks to workers using phase instead of shared counters.
+Chi²=5.8 (uniform), 28 Mroute/s, zero contention.
+
+## Hardware Results (M1 Max)
+
+| Metric | Value |
+|---|---|
+| Raw phits/read | 1.96 |
+| Compound (N=2) | 4.06 phits |
+| Throughput | 24.6 Mphit/s |
+| PRNG quality | All NIST tests PASS |
+| Scheduler Chi² | 5.8 (uniform < 14.07) |
+| Routing speed | 28 Mroute/s |
+
+## Terminology
+
+- **phit** (singular) — 1 phase-bit, unit of temporal information
+- **phits** (plural) — N phase-bits
+- **Triphase** — the three-clock architecture (Alpha, Beta, Observer)
 
 ## Author
 

@@ -4,6 +4,9 @@ phase_v2
 phi_exploit
 phi_uniform
 phi_adaptive
+phit_prng
+phit_crypto
+phit_scheduler
 __pycache__/
 *.pyc
 .DS_Store
