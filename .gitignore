@@ -1,5 +1,7 @@
 *.o
 phase_extract
+phase_v2
+phi_exploit
 __pycache__/
 *.pyc
 .DS_Store
