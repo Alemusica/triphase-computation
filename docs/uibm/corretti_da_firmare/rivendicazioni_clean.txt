@@ -1,0 +1,37 @@
+CLAIMS / RIVENDICAZIONI
+
+INDEPENDENT CLAIMS / RIVENDICAZIONI INDIPENDENTI
+
+Claim 1. A method for extracting information from the phase relationship between asynchronous clock domains in a digital processor, comprising:
+(a) executing a calibrated computational workload on the processor, wherein the workload execution time varies with the phase relationship between the processor's execution clock and a system timer clock;
+(b) reading a system timer value after completion of the workload;
+(c) combining the least-significant bits of the timer value, which are provably uniform due to the asynchronous relationship between clock domains, with a representation of the workload execution result to produce a phase-dependent value;
+(d) applying a hash function to the phase-dependent value to produce a phit (phase-bit) sample;
+(e) optionally repeating steps (a) through (d) with varied workload seeds and accumulating the results using rotation and exclusive-or operations to produce a compound phit sample with higher information content than a single sample.
+
+Claim 2. A method for lock-free task routing in a multi-processor system, comprising:
+(a) extracting a phit sample according to the method of Claim 1;
+(b) computing a worker identifier as the phit sample modulo the number of available workers;
+(c) routing the task to the identified worker;
+wherein no mutex, atomic counter, or shared memory is accessed during the routing operation, and the uniform distribution of phase samples ensures statistically uniform task distribution across workers.
+
+Claim 3. A processor instruction (RDPHI) for reading the instantaneous phase relationship between two specified asynchronous clock domains, comprising:
+(a) a phase comparator circuit implemented as a flip-flop that samples the counter of one clock domain on the rising edge of another clock domain;
+(b) storing the sampled phase value in a general-purpose register;
+(c) wherein the phase value is available for general-purpose computation including arithmetic weighting, conditional gating, and state encoding, and is not limited to entropy extraction or random number generation.
+
+DEPENDENT CLAIMS / RIVENDICAZIONI DIPENDENTI
+
+Claim 4. The method of Claim 1, wherein the compound sampling uses N=2 sequential reads as the optimal trade-off between phit yield and throughput, producing approximately 4.06 phits per compound sample compared to 1.96 phits per single sample.
+
+Claim 5. The method of Claim 1, wherein the uniformity of the timer's least-significant bits is validated by a Chi-squared test yielding a value below the critical threshold for the number of bins, confirming the asynchronous relationship between clock domains.
+
+Claim 6. The method of Claim 1, further comprising accumulating phit samples into an entropy pool of N lanes of M bits each, using multiplicative hashing with golden ratio constants, SplitMix64 mixing, and cross-lane rotation, and extracting random values by combining all lanes with rotated exclusive-or and mutating the pool state after extraction for forward security.
+
+Claim 7. The method of Claim 1, further comprising deriving a cryptographic keystream from the phase vector Phi(t) = (f_1t mod 1, f_2t mod 1, ..., f_K*t mod 1) at a specific time t, where f_1, f_2, ..., f_K are the frequencies of K asynchronous clock domains, and encrypting a plaintext message by exclusive-or with the keystream, wherein decryption requires knowledge of both the exact clock frequencies and the exact time of encryption.
+
+Claim 8. The method of Claim 7, further comprising phase-locked access windows wherein decryption is only possible when the relative phase between a specified pair of clock domains falls within a predetermined range.
+
+Claim 9. The instruction of Claim 3, further comprising companion instructions PHIGATE and PHIWEIGHT that respectively gate execution on a phase condition and return phase as a fixed-point arithmetic weight, enabling three computational paradigms: phase-gated computation, phase-weighted computation, and phase-encoded computation.
+
+Claim 10. A portable software library implementing the methods of Claims 1, 2, 6, and 7 as a header-only C library with platform-specific timer backends for ARM, x86, and RISC-V architectures, providing phit extraction, compound sampling, entropy pool management, PRNG, lock-free routing, and self-test functionality without requiring hardware modification.
