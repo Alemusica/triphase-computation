@@ -58,7 +58,7 @@ Phase-Weighted Computation: using phase values as arithmetic coefficients
 Phase-Encoded Computation: multiplexing N values in a single register via time-division based on phase
 
 5. Three practical applications demonstrated on commodity hardware:
-Phase-based pseudo-random number generation with quality passing NIST SP 800-22 statistical tests
+Phase-based pseudo-random number generation passing four NIST SP 800-22-inspired statistical tests (Monobit, Runs, Byte Distribution, Per-Bit Entropy)
 Lock-free task scheduling using phase instead of shared counters
 Phase-gated encryption where the cryptographic key is derived from clock frequency relationships at a specific moment in time
 
@@ -155,7 +155,7 @@ To extract a 64-bit random value: (1) four fresh phit harvests are performed; (2
 
 3.4 PRNG Quality Results
 
-On Apple M1 Max, the PRNG passes all tested NIST SP 800-22 statistical tests:
+On Apple M1 Max, the PRNG passes four NIST SP 800-22-inspired statistical tests:
 
 | Test | Result | Metric |
 |------|--------|--------|
@@ -249,7 +249,7 @@ Five experimental programs (phase_extract.c, phase_extract_v2.c, phi_exploit.c, 
 
 Study 2: PRNG Quality
 
-The phit-based PRNG was tested against NIST SP 800-22 statistical test suite on 10 million 64-bit samples. All tests passed, with per-bit entropy measured at 100% (64.0/64.0 bits).
+The phit-based PRNG was tested against four statistical tests inspired by NIST SP 800-22 (Monobit, Runs, Byte Distribution, Per-Bit Entropy) on 10 million 64-bit samples. All four tests passed, with per-bit entropy measured at 100% (64.0/64.0 bits).
 
 Study 3: Lock-Free Scheduler
 
@@ -264,22 +264,6 @@ The invention has immediate industrial applicability in:
 3. Digital audio processing, where phase-weighted modulation of DSP parameters provides natural decorrelation and dithering.
 4. Cryptographic systems requiring time-bound access controls via phase-locked access windows.
 5. Processor design, where the proposed RDPHI instruction adds phase computation capability at minimal silicon cost (~200 gates).
-
-DRAWINGS / DISEGNI
-
-FIG. 1 — Block diagram of the Triad Architecture showing three asynchronous clock domains (Alpha, Beta, Observer) and their phase relationships.
-
-FIG. 2 — Flowchart of the basic phit sampling method (Steps 1-4 of Section 2.1).
-
-FIG. 3 — Flowchart of the compound phit sampling method (Section 2.2).
-
-FIG. 4 — Block diagram of the entropy pool structure showing 4 lanes, feed mechanism, and extraction mechanism (Section 3).
-
-FIG. 5 — Diagram of the RDPHI hardware phase comparator circuit (Section 6.2).
-
-FIG. 6 — Table of experimental results on Apple M1 Max (Sections 3.4 and 4.2).
-
-FIG. 7 — Diagram showing phase-gated encryption and decryption flow (Section 5).
 
 PRIOR ART REFERENCES / RIFERIMENTI ARTE NOTA
 
