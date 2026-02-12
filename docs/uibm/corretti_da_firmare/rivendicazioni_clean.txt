@@ -28,7 +28,7 @@ Claim 5. The method of Claim 1, wherein the uniformity of the timer's least-sign
 
 Claim 6. The method of Claim 1, further comprising accumulating phit samples into an entropy pool of N lanes of M bits each, using multiplicative hashing with golden ratio constants, SplitMix64 mixing, and cross-lane rotation, and extracting random values by combining all lanes with rotated exclusive-or and mutating the pool state after extraction for forward security.
 
-Claim 7. The method of Claim 1, further comprising deriving a cryptographic keystream from the phase vector Phi(t) = (f_1t mod 1, f_2t mod 1, ..., f_K*t mod 1) at a specific time t, where f_1, f_2, ..., f_K are the frequencies of K asynchronous clock domains, and encrypting a plaintext message by exclusive-or with the keystream, wherein decryption requires knowledge of both the exact clock frequencies and the exact time of encryption.
+Claim 7. The method of Claim 1, further comprising deriving a cryptographic keystream from the phase vector Phi(t) = (f_1*t mod 1, f_2*t mod 1, ..., f_K*t mod 1) at a specific time t, where f_1, f_2, ..., f_K are the frequencies of K asynchronous clock domains, and encrypting a plaintext message by exclusive-or with the keystream, wherein decryption requires knowledge of both the exact clock frequencies and the exact time of encryption.
 
 Claim 8. The method of Claim 7, further comprising phase-locked access windows wherein decryption is only possible when the relative phase between a specified pair of clock domains falls within a predetermined range.
 

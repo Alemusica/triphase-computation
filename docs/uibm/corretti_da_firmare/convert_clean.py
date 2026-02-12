@@ -13,9 +13,9 @@ def clean_markdown(text):
     # Remove markdown headers (###, ####, etc.) - keep just the text
     text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
 
-    # Remove bold/italic markers
+    # Remove bold/italic markers (but NOT multiplication asterisks like f_1*t)
     text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
-    text = re.sub(r'\*(.*?)\*', r'\1', text)
+    text = re.sub(r'(?<!\w)\*(.*?)\*(?!\w)', r'\1', text)
 
     # Remove code blocks
     text = re.sub(r'```.*?```', '', text, flags=re.DOTALL)

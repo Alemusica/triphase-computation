@@ -8,7 +8,7 @@ The present invention relates to digital processor architecture and, more specif
 
 BACKGROUND OF THE INVENTION / CONTESTO DELL'INVENZIONE
 
-Problem Statement
+Problem Statement / Problema Tecnico
 
 Modern digital processors contain multiple independent clock domains operating at different frequencies. For example, the Apple M1 Max processor contains at least three distinct clock domains:
 Performance cores (P-cores) at approximately 3,228 MHz
@@ -19,13 +19,13 @@ These clock domains are asynchronous with respect to each other. The phase relat
 
 The present invention recognizes that this phase information is not noise but an exploitable computational resource with measurable information content.
 
-Prior Art / Arte Nota
+Prior Art / Stato della Tecnica
 
-Jitterentropy (Linux Kernel): The jitterentropy module (Stephan Muller) harvests CPU timing jitter as an entropy source for /dev/random. It executes CPU operations, measures timing variations, and collects least-significant bits as random data. Jitterentropy treats timing variations as random noise to be collected, yielding approximately 1 bit of entropy per measurement (conservative SP800-90B estimate: 1/3 bit per measurement). It does not formalize or exploit the structured phase relationship between clock domains, nor does it use phase information for computation beyond entropy harvesting.
+Jitterentropy (Linux Kernel): The jitterentropy module (Stephan Muller) harvests CPU timing jitter as an entropy source for /dev/random. It executes CPU operations, measures timing variations, and collects least-significant bits as random data. Jitterentropy treats timing variations as random noise to be collected, yielding approximately 1 bit of entropy per measurement (conservative SP 800-90B estimate: 1/3 bit per measurement). It does not formalize or exploit the structured phase relationship between clock domains, nor does it use phase information for computation beyond entropy harvesting.
 
 Hardware Random Number Generators (RDRAND/RDSEED, ARM RNDR): Intel and ARM provide dedicated hardware circuits for random number generation based on thermal noise in self-timed circuits. These require dedicated silicon area and are not available on all processors, particularly low-cost embedded and IoT devices.
 
-Clock Computing Machines (US10498528B2, Kwok, 2019): This patent describes computation using time states within a single cyclic counter (clock machine) with N discrete time states. Clock machines use deterministic modulo arithmetic on single-clock time state sequences. The present invention differs fundamentally in that it exploits the phase RELATIONSHIP between multiple asynchronous clock domains with continuous (not discrete) phase values, and provides three distinct computational paradigms (gated, weighted, encoded) not described in clock machines.
+Clock Computing Machines (US10498528B2, Kwok, 2019): This patent describes computation using time states within a single cyclic counter (clock machine) with N discrete time states. Clock machines use deterministic modulo arithmetic on single-clock time state sequences. The present invention differs fundamentally in that it exploits the phase relationship between multiple asynchronous clock domains with continuous (not discrete) phase values, and provides three distinct computational paradigms (gated, weighted, encoded) not described in clock machines.
 
 RISC-V Entropy Source Interface (Neumann et al., 2022): The RISC-V ISA defines an entropy source extension using dual rationally-related synthesized clock signals for noise extraction, compliant with SP800-90B and FIPS 140-3. This interface provides entropy for random number generation only. The present invention's proposed RDPHI instruction returns phase information for general-purpose computation (gating, weighting, encoding), not solely for entropy extraction.
 
@@ -33,7 +33,7 @@ Ring Oscillator TRNGs: True Random Number Generators based on phase jitter betwe
 
 Round-Robin and Shared-State Scheduling: Conventional task scheduling in multi-processor systems relies on shared counters, atomic operations, or mutex-protected state to distribute work among workers. These mechanisms create contention points that limit scalability.
 
-Deficiencies of Prior Art
+Deficiencies of Prior Art / Carenze della Tecnica Nota
 
 1. No prior art formalizes the phase relationship between asynchronous clock domains as a general computational resource with three paradigms (gated, weighted, encoded).
 2. Jitterentropy extracts approximately 1 bit per measurement; the present invention extracts 2-4 phits per measurement through compound sampling.
@@ -255,7 +255,7 @@ Study 3: Lock-Free Scheduler
 
 100,000 tasks routed to 8 workers without shared state. Chi-squared uniformity: 7.8 (threshold 14.07). Maximum load imbalance: 2.5%. Zero lock contention. Throughput: 28 Mroute/s.
 
-INDUSTRIAL APPLICABILITY / APPLICABILITA INDUSTRIALE
+INDUSTRIAL APPLICABILITY / APPLICABILITÀ INDUSTRIALE
 
 The invention has immediate industrial applicability in:
 
@@ -265,11 +265,11 @@ The invention has immediate industrial applicability in:
 4. Cryptographic systems requiring time-bound access controls via phase-locked access windows.
 5. Processor design, where the proposed RDPHI instruction adds phase computation capability at minimal silicon cost (~200 gates).
 
-PRIOR ART REFERENCES / RIFERIMENTI ARTE NOTA
+PRIOR ART REFERENCES / RIFERIMENTI ALLO STATO DELLA TECNICA
 
 1. Muller, S. "CPU Time Jitter Based Non-Physical True Random Number Generator." jitterentropy-library, GitHub. BSD/GPLv2.
 2. Intel Corporation. "Intel Digital Random Number Generator (DRNG) Software Implementation Guide." 2021.
-3. Kwok, M. "Clock computing Machines." US Patent US10498528B2, 2019.
+3. Kwok, M. "Clock Computing Machines." US Patent US10498528B2, 2019.
 4. Neumann, M. et al. "Development of the RISC-V Entropy Source Interface." Journal of Cryptographic Engineering, 2022.
 5. Gaines, B.R. "Stochastic Computing Systems." Advances in Information Systems Science, Vol. 2, 1969.
 6. Madhavan, A., Sherwood, T., Strukov, D. "Race Logic: A hardware acceleration for dynamic programming algorithms." ISCA 2014.
