@@ -1,39 +1,44 @@
-Metodo e sistema per l'estrazione e l'utilizzo di bit di fase computazionali (phit) dalle relazioni tra domini di clock asincroni nei processori digitali
+# Metodo e sistema per l'estrazione e l'utilizzo di bit di fase computazionali (phit) dalle relazioni tra domini di clock asincroni nei processori digitali
 
-Title (EN): Method and System for Extracting and Utilizing Computational Phase-Bits (Phits) from Asynchronous Clock Domain Relationships in Digital Processors
+**Title (EN):** Method and System for Extracting and Utilizing Computational Phase-Bits (Phits) from Asynchronous Clock Domain Relationships in Digital Processors
 
-CAMPO DELL'INVENZIONE / FIELD OF THE INVENTION
+---
+
+## CAMPO DELL'INVENZIONE / FIELD OF THE INVENTION
 
 La presente invenzione riguarda l'architettura dei processori digitali e, più specificamente, metodi e sistemi per l'estrazione di informazione utilizzabile dalle relazioni di fase tra domini di clock asincroni presenti nei moderni processori multi-clock. L'invenzione definisce una nuova unità di informazione, il "phit" (phase-bit), e fornisce metodi per estrarre, accumulare e utilizzare i phit per la generazione di entropia, la coordinazione lock-free di task e la gestione di chiavi crittografiche temporali.
 
-CONTESTO DELL'INVENZIONE / BACKGROUND OF THE INVENTION
+---
 
-Problema Tecnico / Problem Statement
+## CONTESTO DELL'INVENZIONE / BACKGROUND OF THE INVENTION
+
+### Problema Tecnico / Problem Statement
 
 I moderni processori digitali contengono molteplici domini di clock indipendenti che operano a frequenze diverse. Ad esempio, il processore Apple M1 Max contiene almeno tre domini di clock distinti:
-Core ad alte prestazioni (P-core) a circa 3.228 MHz
-Core ad alta efficienza (E-core) a circa 2.064 MHz
-Timer di sistema a 24 MHz (ARM Generic Timer, cntvct_el0)
+
+- Core ad alte prestazioni (P-core) a circa 3.228 MHz
+- Core ad alta efficienza (E-core) a circa 2.064 MHz
+- Timer di sistema a 24 MHz (ARM Generic Timer, cntvct_el0)
 
 Questi domini di clock sono asincroni l'uno rispetto all'altro. La relazione di fase tra due clock qualsiasi cambia continuamente e deterministicamente in funzione del loro rapporto di frequenza. Questa informazione di fase è attualmente trattata come rumore — qualcosa da eliminare mediante barriere di sincronizzazione, circuiti di clock domain crossing e protezioni contro la metastabilità.
 
 La presente invenzione riconosce che questa informazione di fase non è rumore, bensì una risorsa computazionale sfruttabile con contenuto informativo misurabile.
 
-Stato della Tecnica / Prior Art
+### Stato della Tecnica / Prior Art
 
-Jitterentropy (Kernel Linux): Il modulo jitterentropy (Stephan Muller) raccoglie il jitter temporale della CPU come sorgente di entropia per /dev/random. Esegue operazioni sulla CPU, misura le variazioni temporali e raccoglie i bit meno significativi come dati casuali. Jitterentropy tratta le variazioni temporali come rumore casuale da raccogliere, producendo circa 1 bit di entropia per misurazione (stima conservativa SP 800-90B: 1/3 di bit per misurazione). Non formalizza né sfrutta la relazione di fase strutturata tra domini di clock, né utilizza l'informazione di fase per la computazione oltre alla raccolta di entropia.
+**Jitterentropy (Kernel Linux):** Il modulo jitterentropy (Stephan Muller) raccoglie il jitter temporale della CPU come sorgente di entropia per /dev/random. Esegue operazioni sulla CPU, misura le variazioni temporali e raccoglie i bit meno significativi come dati casuali. Jitterentropy tratta le variazioni temporali come rumore casuale da raccogliere, producendo circa 1 bit di entropia per misurazione (stima conservativa SP 800-90B: 1/3 di bit per misurazione). Non formalizza né sfrutta la relazione di fase strutturata tra domini di clock, né utilizza l'informazione di fase per la computazione oltre alla raccolta di entropia.
 
-Generatori hardware di numeri casuali (RDRAND/RDSEED, ARM RNDR): Intel e ARM forniscono circuiti hardware dedicati per la generazione di numeri casuali basati sul rumore termico in circuiti auto-temporizzati. Questi richiedono area di silicio dedicata e non sono disponibili su tutti i processori, in particolare sui dispositivi embedded e IoT a basso costo.
+**Generatori hardware di numeri casuali (RDRAND/RDSEED, ARM RNDR):** Intel e ARM forniscono circuiti hardware dedicati per la generazione di numeri casuali basati sul rumore termico in circuiti auto-temporizzati. Questi richiedono area di silicio dedicata e non sono disponibili su tutti i processori, in particolare sui dispositivi embedded e IoT a basso costo.
 
-Clock Computing Machines (US10498528B2, Kwok, 2019): Questo brevetto descrive la computazione mediante stati temporali all'interno di un singolo contatore ciclico (clock machine) con N stati temporali discreti. Le clock machine utilizzano aritmetica modulare deterministica su sequenze temporali a singolo clock. La presente invenzione differisce fondamentalmente in quanto sfrutta la relazione di fase tra molteplici domini di clock asincroni con valori di fase continui (non discreti), e fornisce tre paradigmi computazionali distinti (gated, weighted, encoded) non descritti nelle clock machine.
+**Clock Computing Machines (US10498528B2, Kwok, 2019):** Questo brevetto descrive la computazione mediante stati temporali all'interno di un singolo contatore ciclico (clock machine) con N stati temporali discreti. Le clock machine utilizzano aritmetica modulare deterministica su sequenze temporali a singolo clock. La presente invenzione differisce fondamentalmente in quanto sfrutta la relazione di fase tra molteplici domini di clock asincroni con valori di fase continui (non discreti), e fornisce tre paradigmi computazionali distinti (gated, weighted, encoded) non descritti nelle clock machine.
 
-Interfaccia sorgente di entropia RISC-V (Neumann et al., 2022): L'ISA RISC-V definisce un'estensione per sorgente di entropia che utilizza due segnali di clock sintetizzati con rapporto razionale per l'estrazione di rumore, conforme a SP 800-90B e FIPS 140-3. Questa interfaccia fornisce entropia solo per la generazione di numeri casuali. L'istruzione RDPHI proposta dalla presente invenzione restituisce informazione di fase per la computazione general-purpose (gating, weighting, encoding), non esclusivamente per l'estrazione di entropia.
+**Interfaccia sorgente di entropia RISC-V (Neumann et al., 2022):** L'ISA RISC-V definisce un'estensione per sorgente di entropia che utilizza due segnali di clock sintetizzati con rapporto razionale per l'estrazione di rumore, conforme a SP 800-90B e FIPS 140-3. Questa interfaccia fornisce entropia solo per la generazione di numeri casuali. L'istruzione RDPHI proposta dalla presente invenzione restituisce informazione di fase per la computazione general-purpose (gating, weighting, encoding), non esclusivamente per l'estrazione di entropia.
 
-TRNG a oscillatore ad anello: Generatori di numeri casuali veri basati sul jitter di fase tra oscillatori ad anello in FPGA/ASIC. Si tratta di implementazioni esclusivamente hardware che richiedono circuiti dedicati e si concentrano sull'ampiezza del jitter piuttosto che sulle relazioni di fase strutturate tra domini di clock indipendenti.
+**TRNG a oscillatore ad anello:** Generatori di numeri casuali veri basati sul jitter di fase tra oscillatori ad anello in FPGA/ASIC. Si tratta di implementazioni esclusivamente hardware che richiedono circuiti dedicati e si concentrano sull'ampiezza del jitter piuttosto che sulle relazioni di fase strutturate tra domini di clock indipendenti.
 
-Scheduling Round-Robin e a stato condiviso: Lo scheduling convenzionale dei task nei sistemi multiprocessore si basa su contatori condivisi, operazioni atomiche o stato protetto da mutex per distribuire il lavoro tra i worker. Questi meccanismi creano punti di contesa che limitano la scalabilità.
+**Scheduling Round-Robin e a stato condiviso:** Lo scheduling convenzionale dei task nei sistemi multiprocessore si basa su contatori condivisi, operazioni atomiche o stato protetto da mutex per distribuire il lavoro tra i worker. Questi meccanismi creano punti di contesa che limitano la scalabilità.
 
-Carenze della Tecnica Nota / Deficiencies of Prior Art
+### Carenze della Tecnica Nota / Deficiencies of Prior Art
 
 1. Nessuna arte nota formalizza la relazione di fase tra domini di clock asincroni come risorsa computazionale generale con tre paradigmi (gated, weighted, encoded).
 2. Jitterentropy estrae circa 1 bit per misurazione; la presente invenzione estrae 2-4 phit per misurazione attraverso il campionamento composto.
@@ -42,7 +47,9 @@ Carenze della Tecnica Nota / Deficiencies of Prior Art
 5. Lo scheduling lock-free mediante fase senza alcuno stato condiviso non è stato precedentemente proposto.
 6. La sorgente di entropia RISC-V restituisce solo entropia; l'istruzione RDPHI della presente invenzione restituisce fase per la computazione.
 
-SOMMARIO DELL'INVENZIONE / SUMMARY OF THE INVENTION
+---
+
+## SOMMARIO DELL'INVENZIONE / SUMMARY OF THE INVENTION
 
 La presente invenzione introduce un framework computazionale denominato "Triphase Computation" che tratta la relazione di fase tra domini di clock asincroni come una risorsa informativa sfruttabile. Il framework definisce:
 
@@ -53,22 +60,24 @@ La presente invenzione introduce un framework computazionale denominato "Triphas
 3. Metodi per l'estrazione di phit dall'hardware del processore esistente senza modifiche, mediante campionamento composto di valori del timer e delta temporali del carico di lavoro.
 
 4. Tre paradigmi computazionali per l'utilizzo dei phit:
-Computazione Phase-Gated: esecuzione di operazioni solo quando le fasi dei clock si allineano in punti specifici
-Computazione Phase-Weighted: utilizzo dei valori di fase come coefficienti aritmetici
-Computazione Phase-Encoded: multiplexing di N valori in un singolo registro mediante divisione temporale basata sulla fase
+   - Computazione Phase-Gated: esecuzione di operazioni solo quando le fasi dei clock si allineano in punti specifici
+   - Computazione Phase-Weighted: utilizzo dei valori di fase come coefficienti aritmetici
+   - Computazione Phase-Encoded: multiplexing di N valori in un singolo registro mediante divisione temporale basata sulla fase
 
 5. Tre applicazioni pratiche dimostrate su hardware commerciale:
-Generazione di numeri pseudo-casuali basata sulla fase, che supera quattro test statistici ispirati a NIST SP 800-22 (Monobit, Runs, Byte Distribution, Per-Bit Entropy)
-Scheduling lock-free di task utilizzando la fase invece di contatori condivisi
-Cifratura phase-gated in cui la chiave crittografica è derivata dalle relazioni tra le frequenze di clock in uno specifico istante temporale
+   - Generazione di numeri pseudo-casuali basata sulla fase, che supera quattro test statistici ispirati a NIST SP 800-22 (Monobit, Runs, Byte Distribution, Per-Bit Entropy)
+   - Scheduling lock-free di task utilizzando la fase invece di contatori condivisi
+   - Cifratura phase-gated in cui la chiave crittografica è derivata dalle relazioni tra le frequenze di clock in uno specifico istante temporale
 
 6. Un'estensione ISA proposta (istruzione RDPHI) per la lettura hardware diretta della fase, con un miglioramento del throughput proiettato di 100-300x rispetto al metodo di estrazione software.
 
-DESCRIZIONE DETTAGLIATA DELL'INVENZIONE / DETAILED DESCRIPTION OF THE INVENTION
+---
 
-1. Fondamenti Teorici
+## DESCRIZIONE DETTAGLIATA DELL'INVENZIONE / DETAILED DESCRIPTION OF THE INVENTION
 
-1.1 Modello di Stato Esteso
+### 1. Fondamenti Teorici
+
+#### 1.1 Modello di Stato Esteso
 
 Lo stato di un processore convenzionale al tempo t è descritto dal suo stato spaziale S(t) — il contenuto di registri, memoria e flag. La presente invenzione estende questo modello:
 
@@ -88,7 +97,7 @@ delta_phi_ij(t) = (f_i - f_j) * t mod 1
 
 Questa differenza di fase oscilla alla frequenza di battimento |f_i - f_j| ed è deterministica per frequenze e tempo noti, ma appare casuale a un osservatore che non conosce le frequenze esatte e il momento di osservazione.
 
-1.2 Contenuto Informativo
+#### 1.2 Contenuto Informativo
 
 L'entropia di Shannon del canale di fase tra due clock asincroni dipende dalla risoluzione di misurazione. Con un timer di risoluzione R e un carico di lavoro di durata D tick, il numero di stati di fase distinguibili è approssimativamente D/R, con:
 
@@ -98,18 +107,19 @@ Per l'Apple M1 Max con timer a 24 MHz (R = 41,67 ns) e un carico di lavoro calib
 
 Fondamento matematico: Quando le frequenze dei clock sono incommensurabili (il loro rapporto è irrazionale), il Teorema di Equidistribuzione di Weyl garantisce che i campioni di fase siano equidistribuiti sull'intervallo unitario. Il Teorema delle Tre Distanze (Steinhaus) vincola la struttura di campionamento a un massimo di 3 dimensioni di gap distinte. L'entropia di Kolmogorov-Sinai della rotazione deterministica è zero; l'entropia estraibile proviene dal jitter hardware nell'esecuzione del carico di lavoro, amplificato dalla struttura di fase.
 
-1.3 L'Architettura a Triade
+#### 1.3 L'Architettura a Triade
 
 L'unità fondamentale della computazione trifase è una triade di tre clock asincroni:
-Clock Alpha: il primo oscillatore (es. clock P-core)
-Clock Beta: il secondo oscillatore (es. clock E-core)
-Clock Observer: il terzo clock che campiona la relazione di fase tra Alpha e Beta (es. timer di sistema)
+
+- Clock Alpha: il primo oscillatore (es. clock P-core)
+- Clock Beta: il secondo oscillatore (es. clock E-core)
+- Clock Observer: il terzo clock che campiona la relazione di fase tra Alpha e Beta (es. timer di sistema)
 
 Due clock generano un segnale di battimento; il terzo osserva e computa sulla base della relazione di fase. Questa asimmetria è fondamentale: né Alpha né Beta possono osservare la propria relazione di fase — solo l'Observer può farlo.
 
-2. Metodo di Estrazione dei Phit (Software)
+### 2. Metodo di Estrazione dei Phit (Software)
 
-2.1 Campionamento Base dei Phit
+#### 2.1 Campionamento Base dei Phit
 
 Il metodo per l'estrazione di un singolo campione phit dall'hardware esistente comprende:
 
@@ -121,7 +131,7 @@ Passo 3: Combinazione dei bit meno significativi del timer (che sono uniformi in
 
 Passo 4: Applicazione di una funzione hash per distribuire il valore combinato sull'intero intervallo di output.
 
-2.2 Campionamento Composto dei Phit
+#### 2.2 Campionamento Composto dei Phit
 
 Per aumentare il numero di phit per campione, il metodo impiega il campionamento composto con N letture sequenziali:
 
@@ -131,29 +141,29 @@ Passo 2: Applicazione di un hash finale alla chiave composta.
 
 Il metodo composto con N=2 letture produce circa 4,06 phit, rispetto a 1,96 phit per una singola lettura. Il valore ottimale di N=2 fornisce il miglior compromesso tra resa in phit e throughput.
 
-2.3 Uniformità dei Bit Meno Significativi del Timer
+#### 2.3 Uniformità dei Bit Meno Significativi del Timer
 
 Una scoperta chiave di questa invenzione è che i bit meno significativi del timer di sistema presentano una distribuzione dimostrabilmente uniforme. Sull'Apple M1 Max, i 2 LSB di clock_gettime_nsec_np(CLOCK_UPTIME_RAW) producono un valore Chi-quadro di 0,39 su 4 bin (valore critico 7,81 a p=0,05, 3 gradi di libertà), confermando l'uniformità. Questa uniformità deriva dalla relazione asincrona tra il dominio di clock del timer e il dominio di clock della CPU.
 
-2.4 Non-Stazionarietà e Robustezza
+#### 2.4 Non-Stazionarietà e Robustezza
 
 Durante lo sviluppo, è stato scoperto che la distribuzione dei delta temporali è non-stazionaria a causa dello scaling dinamico della frequenza della CPU. Il metodo di campionamento composto descritto nella Sezione 2.2 è robusto rispetto a questa non-stazionarietà perché combina LSB del timer uniformi (che sono indipendenti dalla frequenza) con il delta temporale. Ciò è stato validato empiricamente: il metodo di routing basato su CDF calibrato a una frequenza produce risultati distorti quando la frequenza cambia, mentre il campionamento composto mantiene l'uniformità.
 
-3. Pool di Entropia dei Phit e PRNG
+### 3. Pool di Entropia dei Phit e PRNG
 
-3.1 Struttura del Pool di Entropia
+#### 3.1 Struttura del Pool di Entropia
 
 L'invenzione include un pool di accumulo dell'entropia costituito da uno stato a 256 bit suddiviso in 4 corsie da 64 bit ciascuna, un contatore di mix monotono e uno stimatore dei bit raccolti.
 
-3.2 Alimentazione del Pool
+#### 3.2 Alimentazione del Pool
 
 Quando un campione phit viene immesso nel pool: (1) il contatore di mix si incrementa; (2) il campione viene combinato con il contatore utilizzando la costante del rapporto aureo per prevenire cicli; (3) il valore combinato subisce il mixing SplitMix64; (4) il risultato viene combinato con XOR nella corsia corrente del pool; (5) le corsie adiacenti vengono mixate incrociandole mediante rotazione a 64 bit di 17 posizioni.
 
-3.3 Estrazione dal Pool
+#### 3.3 Estrazione dal Pool
 
 Per estrarre un valore casuale a 64 bit: (1) vengono eseguiti quattro raccolti phit freschi; (2) tutte e quattro le corsie del pool vengono combinate mediante XOR con differenti quantità di rotazione; (3) la forward security è mantenuta mutando due corsie del pool con versioni ruotate dell'output.
 
-3.4 Risultati di Qualità del PRNG
+#### 3.4 Risultati di Qualità del PRNG
 
 Sull'Apple M1 Max, il PRNG supera quattro test statistici ispirati a NIST SP 800-22:
 
@@ -165,9 +175,9 @@ Sull'Apple M1 Max, il PRNG supera quattro test statistici ispirati a NIST SP 800
 | Entropia Per-Bit | SUPERATO | 64,0/64,0 bit (100%) |
 | Throughput | 181 Mbit/s | (22,6 MB/s) |
 
-4. Routing Lock-Free di Task mediante Phit
+### 4. Routing Lock-Free di Task mediante Phit
 
-4.1 Metodo
+#### 4.1 Metodo
 
 L'invenzione fornisce un metodo per la distribuzione di task ai thread worker senza stato condiviso:
 (1) Quando un task arriva per il dispatch, si estrae un campione phit mediante campionamento composto (N=2).
@@ -176,7 +186,7 @@ L'invenzione fornisce un metodo per la distribuzione di task ai thread worker se
 
 Non è richiesto alcun mutex, contatore atomico o memoria condivisa. Ogni thread calcola indipendentemente la funzione di routing, e la relazione di fase tra i rispettivi clock garantisce una distribuzione uniforme.
 
-4.2 Risultati
+#### 4.2 Risultati
 
 Sull'Apple M1 Max con 8 worker e 100.000 task:
 
@@ -188,23 +198,23 @@ Sull'Apple M1 Max con 8 worker e 100.000 task:
 | Stato condiviso richiesto | Nessuno |
 | Contesa per lock | Zero |
 
-5. Cifratura Phase-Gated
+### 5. Cifratura Phase-Gated
 
-5.1 Concetto
+#### 5.1 Concetto
 
 L'invenzione fornisce un metodo di cifratura in cui la chiave è derivata dalle frequenze di tre o più domini di clock (note alle parti autorizzate) e dal momento esatto della cifratura. Il keystream per la posizione del byte i al tempo t è derivato dal vettore di fase al tempo t. Cifratura e decifratura sono simmetriche (XOR con keystream).
 
-5.2 Sensibilità Temporale
+#### 5.2 Sensibilità Temporale
 
 Un errore temporale di 1 microsecondo produce un output completamente diverso. Questa proprietà deriva dal fatto che le frequenze di clock (nell'ordine dei GHz) causano cambiamenti completi dei vettori di fase nell'arco di nanosecondi.
 
-5.3 Finestre di Accesso Phase-Locked
+#### 5.3 Finestre di Accesso Phase-Locked
 
 L'invenzione fornisce inoltre un metodo per limitare la decifratura a specifiche finestre di fase — intervalli temporali in cui la fase relativa tra due domini di clock rientra in un intervallo predeterminato.
 
-6. Estensione ISA Proposta (RDPHI)
+### 6. Estensione ISA Proposta (RDPHI)
 
-6.1 Definizione delle Istruzioni
+#### 6.1 Definizione delle Istruzioni
 
 L'invenzione propone tre nuove istruzioni per il processore nello spazio delle estensioni custom dell'ISA RISC-V:
 
@@ -212,11 +222,11 @@ RDPHI rd, rs1, rs2 — Lettura della fase tra i domini di clock rs1 e rs2 nel re
 PHIGATE rd, rs1 — Gating dell'esecuzione sulla condizione di fase in rs1
 PHIWEIGHT rd, rs1 — Restituzione della fase come peso aritmetico a virgola fissa in rd
 
-6.2 Implementazione Hardware
+#### 6.2 Implementazione Hardware
 
 L'istruzione RDPHI è implementata mediante un circuito comparatore di fase: un flip-flop campiona il contatore del dominio di clock A sul fronte di salita del dominio di clock B. Il valore campionato rappresenta la relazione di fase istantanea. Il circuito richiede circa 200 porte logiche.
 
-6.3 Prestazioni Proiettate
+#### 6.3 Prestazioni Proiettate
 
 | Metrica | Software (attuale) | Hardware (RDPHI) | Miglioramento |
 |---------|-------------------|-------------------|---------------|
@@ -225,19 +235,22 @@ L'istruzione RDPHI è implementata mediante un circuito comparatore di fase: un 
 | Throughput | 24,6 Mphit/s | ~3-10 Gphit/s | ~100-400x |
 | Overhead CPU | Carico di lavoro + lettura timer | 1 istruzione | ~100x |
 
-7. Libreria Software Portabile (libphit.h)
+### 7. Libreria Software Portabile (libphit.h)
 
 L'invenzione include una libreria C header-only (366 righe, licenza MIT) che fornisce estrazione di phit portabile su più piattaforme:
-macOS (ARM64): utilizza clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
-macOS (x86): utilizza clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
-Linux (ARM64/x86): utilizza clock_gettime(CLOCK_MONOTONIC_RAW)
-FreeBSD: utilizza clock_gettime(CLOCK_MONOTONIC)
+
+- macOS (ARM64): utilizza clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
+- macOS (x86): utilizza clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
+- Linux (ARM64/x86): utilizza clock_gettime(CLOCK_MONOTONIC_RAW)
+- FreeBSD: utilizza clock_gettime(CLOCK_MONOTONIC)
 
 La libreria fornisce funzionalità di auto-test che validano il determinismo dell'hash, la qualità dell'output del PRNG (test monobit), l'uniformità del routing e l'avanzamento del timer.
 
-VALIDAZIONE SPERIMENTALE / EXPERIMENTAL VALIDATION
+---
 
-Studio 1: Estrazione di Phit su Apple M1 Max
+## VALIDAZIONE SPERIMENTALE / EXPERIMENTAL VALIDATION
+
+### Studio 1: Estrazione di Phit su Apple M1 Max
 
 Cinque programmi sperimentali (phase_extract.c, phase_extract_v2.c, phi_exploit.c, phi_uniform.c, phi_adaptive.c) sono stati sviluppati per caratterizzare l'estrazione di phit sull'Apple M1 Max (CPU 10 core, GPU 32 core, 64 GB di memoria unificata). Risultati principali:
 
@@ -247,15 +260,17 @@ Cinque programmi sperimentali (phase_extract.c, phase_extract_v2.c, phi_exploit.
 4. Throughput: 24,6 Mphit/s
 5. Non-stazionarietà scoperta e risolta mediante campionamento composto
 
-Studio 2: Qualità del PRNG
+### Studio 2: Qualità del PRNG
 
 Il PRNG basato su phit è stato testato con quattro test statistici ispirati a NIST SP 800-22 (Monobit, Runs, Byte Distribution, Per-Bit Entropy) su 10 milioni di campioni a 64 bit. Tutti e quattro i test sono stati superati, con entropia per-bit misurata al 100% (64,0/64,0 bit).
 
-Studio 3: Scheduler Lock-Free
+### Studio 3: Scheduler Lock-Free
 
 100.000 task instradati a 8 worker senza stato condiviso. Uniformità Chi-quadro: 7,8 (soglia 14,07). Sbilanciamento massimo del carico: 2,5%. Zero contesa per lock. Throughput: 28 Mroute/s.
 
-APPLICABILITÀ INDUSTRIALE / INDUSTRIAL APPLICABILITY
+---
+
+## APPLICABILITÀ INDUSTRIALE / INDUSTRIAL APPLICABILITY
 
 L'invenzione ha immediata applicabilità industriale in:
 
@@ -265,7 +280,9 @@ L'invenzione ha immediata applicabilità industriale in:
 4. Sistemi crittografici che richiedono controlli di accesso temporalmente vincolati tramite finestre di accesso phase-locked.
 5. Progettazione di processori, dove l'istruzione RDPHI proposta aggiunge capacità di computazione di fase a costo minimo di silicio (~200 porte logiche).
 
-RIFERIMENTI ALLO STATO DELLA TECNICA / PRIOR ART REFERENCES
+---
+
+## RIFERIMENTI ALLO STATO DELLA TECNICA / PRIOR ART REFERENCES
 
 1. Muller, S. "CPU Time Jitter Based Non-Physical True Random Number Generator." jitterentropy-library, GitHub. BSD/GPLv2.
 2. Intel Corporation. "Intel Digital Random Number Generator (DRNG) Software Implementation Guide." 2021.
@@ -276,5 +293,7 @@ RIFERIMENTI ALLO STATO DELLA TECNICA / PRIOR ART REFERENCES
 7. NIST SP 800-22. "A Statistical Test Suite for Random and Pseudorandom Number Generators for Cryptographic Applications." 2010.
 8. NIST SP 800-90B. "Recommendation for the Entropy Sources Used for Random Bit Generation." 2018.
 
-Specifica preparata per: Alessio Cazzaniga
-Data di preparazione: 12 febbraio 2026
+---
+
+*Specifica preparata per: Alessio Cazzaniga*
+*Data di preparazione: 12 febbraio 2026*

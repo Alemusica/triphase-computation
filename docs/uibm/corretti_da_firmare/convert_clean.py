@@ -40,15 +40,15 @@ def main():
     output_dir = Path('.')
 
     files_to_convert = [
-        'descrizione.md',
-        'riassunto.md',
-        'rivendicazioni.md'
+        ('descrizione_it.md', 'descrizione_clean.txt'),
+        ('riassunto_it.md', 'riassunto_clean.txt'),
+        ('rivendicazioni.md', 'rivendicazioni_clean.txt'),
     ]
 
-    for filename in files_to_convert:
-        source_file = source_dir / filename
+    for source_name, output_name in files_to_convert:
+        source_file = source_dir / source_name
         if not source_file.exists():
-            print(f"Skipping {filename} - not found")
+            print(f"Skipping {source_name} - not found")
             continue
 
         # Read source
@@ -59,11 +59,11 @@ def main():
         clean_content = clean_markdown(content)
 
         # Write output
-        output_file = output_dir / filename.replace('.md', '_clean.txt')
+        output_file = output_dir / output_name
         with open(output_file, 'w', encoding='utf-8') as f:
             f.write(clean_content)
 
-        print(f"  {filename} -> {output_file.name}")
+        print(f"  {source_name} -> {output_name}")
 
 if __name__ == '__main__':
     main()
