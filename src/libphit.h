@@ -116,8 +116,15 @@ int      phit_selftest(void);
 
 #include <math.h>
 
-/* Prevent compiler from optimizing away workloads */
-static volatile uint64_t phit__sink;
+/* Prevent compiler from optimizing away workloads.
+ * Thread-local: each thread gets its own sink — no shared state. */
+#if defined(_MSC_VER)
+  static __declspec(thread) volatile uint64_t phit__sink;
+#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && !defined(__STDC_NO_THREADS__)
+  static _Thread_local volatile uint64_t phit__sink;
+#else
+  static __thread volatile uint64_t phit__sink;
+#endif
 
 /* ---- Platform timer ---- */
 

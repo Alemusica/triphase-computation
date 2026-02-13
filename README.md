@@ -22,7 +22,7 @@ The uniformity of timer LSBs is provable: Chi-squared = 0.39 across 4 bins (crit
 
 ### PRNG from phase entropy
 
-Random number generator seeded by clock phase relationships. Passes four NIST SP 800-22-inspired statistical tests on 10M samples:
+Random number generator seeded by clock phase relationships. Passes four NIST SP 800-22-inspired statistical tests (100K-200K samples):
 
 ```
 Monobit:           PASS (Z-score < 3.29)
@@ -96,7 +96,7 @@ Platforms: macOS (ARM64, x86), Windows (MSVC, MinGW), Linux (ARM64, x86), FreeBS
 
 ```
 src/
-  libphit.h           Header-only library (366 lines)
+  libphit.h           Header-only library (~390 lines)
   phit_prng.c          PRNG benchmark (NIST-inspired tests)
   phit_crypto.c        Phase-gated encryption demo
   phit_scheduler.c     Lock-free task routing demo
