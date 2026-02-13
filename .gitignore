@@ -11,3 +11,12 @@ test_libphit
 __pycache__/
 *.pyc
 .DS_Store
+
+# Sensitive: signed PDFs contain X.509 certificates with personal data
+docs/uibm/pdfa_signed/
+docs/uibm/pdfa_unsigned/
+
+# Sensitive: chat transcripts contain private data
+docs/chat/
+*.jsonl
+*.jsonl.gz
