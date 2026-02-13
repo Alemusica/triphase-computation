@@ -20,3 +20,6 @@ docs/uibm/pdfa_unsigned/
 docs/chat/
 *.jsonl
 *.jsonl.gz
+
+# Patent-sensitive: redacted material awaiting filing
+docs/REDACTED_FOR_PATENT.md
