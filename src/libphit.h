@@ -12,7 +12,7 @@
  * Define LIBPHIT_IMPLEMENTATION in exactly ONE .c file before including.
  * All other files can include without the define for declarations only.
  *
- * Platforms: macOS (ARM64/x86), Linux (ARM64/x86), FreeBSD
+ * Platforms: macOS (ARM64/x86), Windows (x64/x86), Linux (ARM64/x86), FreeBSD
  *
  * Author: Alessio Cazzaniga
  * License: BSL 1.1 (see LICENSE). Non-production use permitted.
@@ -126,6 +126,18 @@ static volatile uint64_t phit__sink;
   #include <mach/mach_time.h>
   uint64_t phit_now_ns(void) {
       return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
+  }
+#elif defined(_WIN32)
+  #ifndef WIN32_LEAN_AND_MEAN
+  #define WIN32_LEAN_AND_MEAN
+  #endif
+  #include <windows.h>
+  uint64_t phit_now_ns(void) {
+      static LARGE_INTEGER freq = {0};
+      LARGE_INTEGER count;
+      if (freq.QuadPart == 0) QueryPerformanceFrequency(&freq);
+      QueryPerformanceCounter(&count);
+      return (uint64_t)(count.QuadPart * 1000000000ULL / freq.QuadPart);
   }
 #elif defined(__linux__) || defined(__FreeBSD__)
   #include <time.h>

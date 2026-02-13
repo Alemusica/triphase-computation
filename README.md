@@ -90,7 +90,7 @@ uint64_t r = phit_prng_u64(&rng);
 assert(phit_selftest());
 ```
 
-Platforms: macOS (ARM64, x86), Linux (ARM64, x86), FreeBSD.
+Platforms: macOS (ARM64, x86), Windows (MSVC, MinGW), Linux (ARM64, x86), FreeBSD.
 
 ## Structure
 
