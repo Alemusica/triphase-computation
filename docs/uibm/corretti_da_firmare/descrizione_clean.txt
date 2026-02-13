@@ -157,14 +157,11 @@ Per estrarre un valore casuale a 64 bit: (1) vengono eseguiti quattro raccolti p
 
 Sull'Apple M1 Max, il PRNG supera quattro test statistici ispirati a NIST SP 800-22:
 
-| Test | Risultato | Metrica |
-|------|-----------|---------|
-| Monobit | SUPERATO | Z-score < 3,29 |
-| Runs | SUPERATO | Z-score < 3,29 |
-| Distribuzione Byte | SUPERATO | Chi-quadro = 221,7 (< valore critico 310) |
-| Entropia Per-Bit | SUPERATO | 64,0/64,0 bit (100%) |
-| Throughput | 181 Mbit/s | (22,6 MB/s) |
-
+Test: Monobit — Risultato: SUPERATO — Metrica: Z-score < 3,29
+Test: Runs — Risultato: SUPERATO — Metrica: Z-score < 3,29
+Test: Distribuzione Byte — Risultato: SUPERATO — Metrica: Chi-quadro = 221,7 (< valore critico 310)
+Test: Entropia Per-Bit — Risultato: SUPERATO — Metrica: 64,0/64,0 bit (100%)
+Test: Throughput — Risultato: 181 Mbit/s — Metrica: (22,6 MB/s)
 4. Routing Lock-Free di Task mediante Phit
 
 4.1 Metodo
@@ -180,14 +177,11 @@ Non è richiesto alcun mutex, contatore atomico o memoria condivisa. Ogni thread
 
 Sull'Apple M1 Max con 8 worker e 100.000 task:
 
-| Metrica | Valore |
-|---------|--------|
-| Chi-quadro | 7,8 (soglia di uniformità: 14,07) |
-| Throughput di routing | 28 Mroute/s |
-| Sbilanciamento massimo del carico | 2,5% |
-| Stato condiviso richiesto | Nessuno |
-| Contesa per lock | Zero |
-
+Metrica: Chi-quadro — Valore: 7,8 (soglia di uniformità: 14,07)
+Metrica: Throughput di routing — Valore: 28 Mroute/s
+Metrica: Sbilanciamento massimo del carico — Valore: 2,5%
+Metrica: Stato condiviso richiesto — Valore: Nessuno
+Metrica: Contesa per lock — Valore: Zero
 5. Cifratura Phase-Gated
 
 5.1 Concetto
@@ -218,13 +212,10 @@ L'istruzione RDPHI è implementata mediante un circuito comparatore di fase: un 
 
 6.3 Prestazioni Proiettate
 
-| Metrica | Software (attuale) | Hardware (RDPHI) | Miglioramento |
-|---------|-------------------|-------------------|---------------|
-| Tempo per lettura | ~100 ns | ~0,3 ns (1 ciclo) | ~300x |
-| Phit per lettura | ~2 | ~8-16 | ~4-8x |
-| Throughput | 24,6 Mphit/s | ~3-10 Gphit/s | ~100-400x |
-| Overhead CPU | Carico di lavoro + lettura timer | 1 istruzione | ~100x |
-
+Metrica: Tempo per lettura — Software (attuale): ~100 ns — Hardware (RDPHI): ~0,3 ns (1 ciclo) — Miglioramento: ~300x
+Metrica: Phit per lettura — Software (attuale): ~2 — Hardware (RDPHI): ~8-16 — Miglioramento: ~4-8x
+Metrica: Throughput — Software (attuale): 24,6 Mphit/s — Hardware (RDPHI): ~3-10 Gphit/s — Miglioramento: ~100-400x
+Metrica: Overhead CPU — Software (attuale): Carico di lavoro + lettura timer — Hardware (RDPHI): 1 istruzione — Miglioramento: ~100x
 7. Libreria Software Portabile (libphit.h)
 
 L'invenzione include una libreria C header-only (366 righe, licenza MIT) che fornisce estrazione di phit portabile su più piattaforme:

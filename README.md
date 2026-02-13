@@ -1,130 +1,170 @@
 # Triphase Computation
 
-Computational model that treats phase relationships between asynchronous clocks
-as an exploitable information resource, not noise to eliminate.
+**Your CPU has multiple asynchronous clocks. Their phase relationship is information. This library extracts it.**
 
-**phit** (phase-bit): unit of information extracted from clock phase relationships.
+Every modern processor contains independent clock domains — performance cores, efficiency cores, system timers — running at different frequencies. The phase relationship between them changes continuously and deterministically, but appears random to an observer who doesn't know the exact frequencies and timing.
 
-## Core Idea
+Current engineering treats this as noise. We treat it as a computational resource.
+
+## The phit
+
+A **phit** (phase-bit) is the unit of information extracted from the phase relationship between two asynchronous clock domains. On Apple M1 Max:
+
+| Metric | Value |
+|---|---|
+| Phits per single read | 1.96 |
+| Phits per compound read (N=2) | 4.06 |
+| Extraction throughput | 24.6 Mphit/s |
+
+The uniformity of timer LSBs is provable: Chi-squared = 0.39 across 4 bins (critical value 7.81 at p=0.05). This isn't statistical luck — it's a consequence of Weyl's Equidistribution Theorem applied to incommensurable clock frequencies.
+
+## What it does
+
+### PRNG from phase entropy
+
+Random number generator seeded by clock phase relationships. Passes four NIST SP 800-22-inspired statistical tests on 10M samples:
 
 ```
-Σ(t) = (S(t), Φ(t))
-
-S = spatial state (conventional bits)
-Φ = phase vector (temporal information — currently discarded)
+Monobit:           PASS (Z-score < 3.29)
+Runs:              PASS (Z-score < 3.29)
+Byte distribution: PASS (Chi² = 221.7, critical = 310)
+Per-bit entropy:   PASS (64.0/64.0 bits)
+Throughput:        181 Mbit/s
 ```
 
-Three asynchronous clocks form a triad: two generate a *beat signal*,
-a third *observes* and *computes* based on the phase relationship.
+### Lock-free task routing
 
-## Structure
+Distribute tasks to workers using phase instead of shared counters. No mutex, no atomics, no shared memory.
 
 ```
-triphase-computation/
-├── src/
-│   ├── triphase_sim.py        # Core simulator (Clock, TriphaseSystem, VM)
-│   ├── libphit.h              # Header-only library (portable, all platforms)
-│   ├── phit_prng.c            # PRNG from phase entropy (NIST tests pass)
-│   ├── phit_crypto.c          # Phase-gated encryption PoC
-│   └── phit_scheduler.c       # Lock-free task dispatch via phits
-├── tests/
-│   └── test_libphit.c         # Smoke test for libphit.h
-├── experiments/
-│   ├── phase_extract.c        # Hardware phase extraction v1 (cntvct_el0)
-│   ├── phase_extract_v2.c     # v2 (mach_absolute_time + clock_gettime)
-│   ├── phi_exploit.c          # Phit maximization tests
-│   ├── phi_uniform.c          # CDF-based routing (non-stationary finding)
-│   ├── phi_adaptive.c         # Adaptive compound-key routing
-│   ├── practical_test.py      # Python benchmark suite (6 tests)
-│   └── beat_visualizer.py     # ASCII beat pattern visualization
-└── docs/
-    └── THEORY.md              # Theoretical framework (CPE)
+Workers:      8
+Tasks:        100,000
+Chi²:         7.8 (uniform threshold: 14.07)
+Max imbalance: 2.5%
+Throughput:    28 Mroute/s
+Shared state:  none
 ```
 
-## Quick Start
+### Phase-gated encryption
+
+Encryption where the key is not stored — it's the temporal relationship between clock frequencies at a specific instant. 1 microsecond timing error = completely different output.
+
+## Quick start
 
 ```bash
-# Library test
+# Build and run tests
 gcc -O0 -o test_libphit tests/test_libphit.c -lm && ./test_libphit
 
-# Applications
+# Run the PRNG benchmark
 gcc -O0 -o phit_prng src/phit_prng.c -lm && ./phit_prng
-gcc -O0 -o phit_crypto src/phit_crypto.c -lm && ./phit_crypto
+
+# Run the lock-free scheduler
 gcc -O0 -o phit_scheduler src/phit_scheduler.c -lm -lpthread && ./phit_scheduler
 
-# Experiments
-gcc -O0 -o phi_adaptive experiments/phi_adaptive.c -lm && ./phi_adaptive
-python3 experiments/practical_test.py
+# Run the encryption demo
+gcc -O0 -o phit_crypto src/phit_crypto.c -lm && ./phit_crypto
 ```
+
+**Important:** compile with `-O0`. Optimization can eliminate the calibrated workload that makes phase extraction work.
 
 ## Using libphit.h
 
-Header-only library. Add to your project:
+Header-only. One file. No dependencies beyond libc.
 
 ```c
 #define LIBPHIT_IMPLEMENTATION
 #include "libphit.h"
 
-int main(void) {
-    // Route a task to one of 8 workers (lock-free)
-    int worker = phit_route(8);
+// Extract phase information
+uint32_t sample = phit_sample_compound(2);  // ~4 phits
 
-    // Generate random numbers from phase entropy
-    phit_prng_t rng;
-    phit_prng_init(&rng);
-    uint64_t r = phit_prng_u64(&rng);
-    double d = phit_prng_double(&rng);
+// Route a task (lock-free, zero shared state)
+int worker = phit_route(num_workers);
 
-    // Fill a buffer with random bytes
-    uint8_t buf[256];
-    phit_prng_fill(&rng, buf, 256);
+// Generate random numbers
+phit_prng_t rng;
+phit_prng_init(&rng);
+uint64_t r = phit_prng_u64(&rng);
 
-    // Self-test
-    assert(phit_selftest());
-}
+// Self-test validates extraction on your hardware
+assert(phit_selftest());
 ```
 
-Platforms: macOS (ARM64/x86), Linux, FreeBSD.
+Platforms: macOS (ARM64, x86), Linux (ARM64, x86), FreeBSD.
 
-## Three Paradigms
+## Structure
 
-| # | Paradigm | Idea | Gain |
-|---|----------|------|------|
-| 1 | Phase-Gated | Compute only at sync points | Temporal filtering |
-| 2 | Phase-Weighted | Phase as arithmetic coefficient | Same code, different results |
-| 3 | Phase-Encoded | N values in 1 register via time-division | Nx memory density |
+```
+src/
+  libphit.h           Header-only library (366 lines)
+  phit_prng.c          PRNG benchmark (NIST-inspired tests)
+  phit_crypto.c        Phase-gated encryption demo
+  phit_scheduler.c     Lock-free task routing demo
+tests/
+  test_libphit.c       Smoke test + throughput measurement
+experiments/
+  phase_extract.c      Phase extraction v1 (cntvct_el0 direct)
+  phase_extract_v2.c   Phase extraction v2 (mach + clock_gettime)
+  phi_exploit.c        Phit maximization experiments
+  phi_uniform.c        CDF-based routing (non-stationarity finding)
+  phi_adaptive.c       Adaptive compound-key routing
+  practical_test.py    Python benchmark suite
+  beat_visualizer.py   ASCII beat pattern visualization
+```
 
-## Applications
+## Theory
 
-### Phit PRNG
-Random number generator using phits as entropy source.
-All NIST SP 800-22 tests pass: monobit, runs, byte distribution, per-bit entropy.
-Throughput: **181 Mbit/s** (22.6 MB/s).
+The extended processor state at time t:
 
-### Phit Crypto
-Phase-gated encryption where the "key" is not stored — it's the moment in time
-multiplied by clock frequency relationships. 1 microsecond timing error = garbage output.
+```
+Sigma(t) = (S(t), Phi(t))
 
-### Phit Scheduler
-Lock-free task dispatch: routes tasks to workers using phase instead of shared counters.
-Chi²=5.8 (uniform), 28 Mroute/s, zero contention.
+S(t)   = spatial state (registers, memory)
+Phi(t) = phase vector (f_1*t mod 1, f_2*t mod 1, ..., f_K*t mod 1)
+```
 
-## Hardware Results (M1 Max)
+Three asynchronous clocks form a **triad**: two generate a beat signal, a third observes and computes based on the phase relationship. Neither clock can observe its own phase — only the third can.
 
-| Metric | Value |
-|---|---|
-| Raw phits/read | 1.96 |
-| Compound (N=2) | 4.06 phits |
-| Throughput | 24.6 Mphit/s |
-| PRNG quality | All NIST tests PASS |
-| Scheduler Chi² | 5.8 (uniform < 14.07) |
-| Routing speed | 28 Mroute/s |
+Three computational paradigms:
 
-## Terminology
+| Paradigm | Mechanism | Application |
+|---|---|---|
+| Phase-Gated | Execute only when clocks align | Temporal filtering, access windows |
+| Phase-Weighted | Phase as arithmetic coefficient | Natural decorrelation, dithering |
+| Phase-Encoded | N values in 1 register via time-division | Memory density multiplication |
 
-- **phit** (singular) — 1 phase-bit, unit of temporal information
-- **phits** (plural) — N phase-bits
-- **Triphase** — the three-clock architecture (Alpha, Beta, Observer)
+## Proposed ISA extension
+
+Three instructions for direct hardware phase readout (RISC-V custom extension):
+
+```
+RDPHI rd, rs1, rs2    Read phase between clock domains rs1 and rs2
+PHIGATE rd, rs1        Gate execution on phase condition
+PHIWEIGHT rd, rs1      Return phase as fixed-point arithmetic weight
+```
+
+Hardware cost: ~200 logic gates (flip-flop phase comparator). Projected improvement: 100-300x throughput over software extraction.
+
+## Prior art and differentiation
+
+| Approach | What it does | How this differs |
+|---|---|---|
+| Jitterentropy | Collects CPU timing noise (~1 bit/sample) | Formalizes phase *relationship*, extracts ~4 phits/sample, uses for routing/crypto |
+| RDRAND/RDSEED | Dedicated silicon RNG | Uses existing clocks, no hardware modification |
+| Clock Machines (US10498528B2) | Single clock, discrete time states | Multiple async clocks, continuous phase |
+| RISC-V entropy source | Returns entropy only | Returns phase for general-purpose computation |
+
+## License
+
+**Business Source License 1.1** (BSL). You may freely use this software for non-production purposes: personal projects, research, evaluation, testing, education. Production and commercial use require a separate license.
+
+On February 13, 2030 (the Change Date), the license converts to Apache 2.0.
+
+Contact: alessio.cazzaniga87@gmail.com
+
+## Patent
+
+The methods implemented in this software are the subject of pending patent applications filed with the Italian Patent and Trademark Office (UIBM), February 2026. Use of these methods — whether through this software or independent implementation — may require a patent license in applicable jurisdictions.
 
 ## Author
 

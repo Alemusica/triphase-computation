@@ -15,7 +15,9 @@
  * Platforms: macOS (ARM64/x86), Linux (ARM64/x86), FreeBSD
  *
  * Author: Alessio Cazzaniga
- * License: MIT
+ * License: BSL 1.1 (see LICENSE). Non-production use permitted.
+ *          Commercial/production use requires a separate license.
+ * Patent:  Methods covered by pending patent applications (UIBM, Feb 2026).
  */
 
 #ifndef LIBPHIT_H

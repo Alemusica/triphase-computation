@@ -7,8 +7,37 @@ Removes all markdown syntax while preserving content structure.
 import re
 from pathlib import Path
 
+def convert_table(match):
+    """Convert a markdown table to plain text list format."""
+    lines = match.group(0).strip().split('\n')
+    # Parse header row
+    headers = [h.strip() for h in lines[0].strip('|').split('|')]
+    # Skip separator row (line 1), process data rows
+    rows = []
+    for line in lines[2:]:
+        cells = [c.strip() for c in line.strip('|').split('|')]
+        rows.append(cells)
+    # Format as list entries
+    result = []
+    for row in rows:
+        parts = []
+        for h, c in zip(headers, row):
+            if c:
+                parts.append(f"{h}: {c}")
+        result.append(' — '.join(parts))
+    return '\n'.join(result)
+
+
 def clean_markdown(text):
     """Remove all markdown formatting from text."""
+
+    # Convert markdown tables to plain text before other processing
+    text = re.sub(
+        r'(?:^\|.+\|$\n){2,}',
+        convert_table,
+        text,
+        flags=re.MULTILINE
+    )
 
     # Remove markdown headers (###, ####, etc.) - keep just the text
     text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
@@ -42,7 +71,8 @@ def main():
     files_to_convert = [
         ('descrizione_it.md', 'descrizione_clean.txt'),
         ('riassunto_it.md', 'riassunto_clean.txt'),
-        ('rivendicazioni.md', 'rivendicazioni_clean.txt'),
+        ('rivendicazioni_it.md', 'rivendicazioni_clean.txt'),
+        ('rivendicazioni.md', 'rivendicazioni_en_clean.txt'),
     ]
 
     for source_name, output_name in files_to_convert:

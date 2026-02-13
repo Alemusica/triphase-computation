@@ -1,37 +1,37 @@
-CLAIMS / RIVENDICAZIONI
+RIVENDICAZIONI / CLAIMS
 
-INDEPENDENT CLAIMS / RIVENDICAZIONI INDIPENDENTI
+RIVENDICAZIONI INDIPENDENTI / INDEPENDENT CLAIMS
 
-Claim 1. A method for extracting information from the phase relationship between asynchronous clock domains in a digital processor, comprising:
-(a) executing a calibrated computational workload on the processor, wherein the workload execution time varies with the phase relationship between the processor's execution clock and a system timer clock;
-(b) reading a system timer value after completion of the workload;
-(c) combining the least-significant bits of the timer value, which are provably uniform due to the asynchronous relationship between clock domains, with a representation of the workload execution result to produce a phase-dependent value;
-(d) applying a hash function to the phase-dependent value to produce a phit (phase-bit) sample;
-(e) optionally repeating steps (a) through (d) with varied workload seeds and accumulating the results using rotation and exclusive-or operations to produce a compound phit sample with higher information content than a single sample.
+Rivendicazione 1. Un metodo per l'estrazione di informazione dalla relazione di fase tra domini di clock asincroni in un processore digitale, comprendente:
+(a) l'esecuzione di un carico di lavoro computazionale calibrato sul processore, in cui il tempo di esecuzione del carico di lavoro varia con la relazione di fase tra il clock di esecuzione del processore e un clock di un timer di sistema;
+(b) la lettura di un valore del timer di sistema dopo il completamento del carico di lavoro;
+(c) la combinazione dei bit meno significativi del valore del timer, che sono uniformi in modo dimostrabile a causa della relazione asincrona tra i domini di clock, con una rappresentazione del risultato di esecuzione del carico di lavoro per produrre un valore dipendente dalla fase;
+(d) l'applicazione di una funzione hash al valore dipendente dalla fase per produrre un campione phit (phase-bit);
+(e) opzionalmente, la ripetizione dei passi da (a) a (d) con seed del carico di lavoro variati e l'accumulo dei risultati mediante operazioni di rotazione e or-esclusivo per produrre un campione phit composto con contenuto informativo superiore a quello di un singolo campione.
 
-Claim 2. A method for lock-free task routing in a multi-processor system, comprising:
-(a) extracting a phit sample according to the method of Claim 1;
-(b) computing a worker identifier as the phit sample modulo the number of available workers;
-(c) routing the task to the identified worker;
-wherein no mutex, atomic counter, or shared memory is accessed during the routing operation, and the uniform distribution of phase samples ensures statistically uniform task distribution across workers.
+Rivendicazione 2. Un metodo per il routing lock-free di task in un sistema multiprocessore, comprendente:
+(a) l'estrazione di un campione phit secondo il metodo della Rivendicazione 1;
+(b) il calcolo di un identificatore di worker come il campione phit modulo il numero di worker disponibili;
+(c) l'instradamento del task al worker identificato;
+in cui nessun mutex, contatore atomico o memoria condivisa viene acceduto durante l'operazione di routing, e la distribuzione uniforme dei campioni di fase garantisce una distribuzione statisticamente uniforme dei task tra i worker.
 
-Claim 3. A processor instruction (RDPHI) for reading the instantaneous phase relationship between two specified asynchronous clock domains, comprising:
-(a) a phase comparator circuit implemented as a flip-flop that samples the counter of one clock domain on the rising edge of another clock domain;
-(b) storing the sampled phase value in a general-purpose register;
-(c) wherein the phase value is available for general-purpose computation including arithmetic weighting, conditional gating, and state encoding, and is not limited to entropy extraction or random number generation.
+Rivendicazione 3. Un'istruzione per processore (RDPHI) per la lettura della relazione di fase istantanea tra due domini di clock asincroni specificati, comprendente:
+(a) un circuito comparatore di fase implementato come un flip-flop che campiona il contatore di un dominio di clock sul fronte di salita di un altro dominio di clock;
+(b) la memorizzazione del valore di fase campionato in un registro general-purpose;
+(c) in cui il valore di fase è disponibile per la computazione general-purpose, inclusa la ponderazione aritmetica, il gating condizionale e la codifica di stato, e non è limitato all'estrazione di entropia o alla generazione di numeri casuali.
 
-DEPENDENT CLAIMS / RIVENDICAZIONI DIPENDENTI
+RIVENDICAZIONI DIPENDENTI / DEPENDENT CLAIMS
 
-Claim 4. The method of Claim 1, wherein the compound sampling uses N=2 sequential reads as the optimal trade-off between phit yield and throughput, producing approximately 4.06 phits per compound sample compared to 1.96 phits per single sample.
+Rivendicazione 4. Il metodo della Rivendicazione 1, in cui il campionamento composto utilizza N=2 letture sequenziali come compromesso ottimale tra resa in phit e throughput, producendo circa 4,06 phit per campione composto rispetto a 1,96 phit per singolo campione.
 
-Claim 5. The method of Claim 1, wherein the uniformity of the timer's least-significant bits is validated by a Chi-squared test yielding a value below the critical threshold for the number of bins, confirming the asynchronous relationship between clock domains.
+Rivendicazione 5. Il metodo della Rivendicazione 1, in cui l'uniformità dei bit meno significativi del timer è validata da un test Chi-quadro che produce un valore inferiore alla soglia critica per il numero di bin, confermando la relazione asincrona tra i domini di clock.
 
-Claim 6. The method of Claim 1, further comprising accumulating phit samples into an entropy pool of N lanes of M bits each, using multiplicative hashing with golden ratio constants, SplitMix64 mixing, and cross-lane rotation, and extracting random values by combining all lanes with rotated exclusive-or and mutating the pool state after extraction for forward security.
+Rivendicazione 6. Il metodo della Rivendicazione 1, comprendente inoltre l'accumulo di campioni phit in un pool di entropia di N corsie da M bit ciascuna, utilizzando hashing moltiplicativo con costanti del rapporto aureo, mixing SplitMix64 e rotazione tra corsie, e l'estrazione di valori casuali mediante la combinazione di tutte le corsie con or-esclusivo ruotato e la mutazione dello stato del pool dopo l'estrazione per la forward security.
 
-Claim 7. The method of Claim 1, further comprising deriving a cryptographic keystream from the phase vector Phi(t) = (f_1*t mod 1, f_2*t mod 1, ..., f_K*t mod 1) at a specific time t, where f_1, f_2, ..., f_K are the frequencies of K asynchronous clock domains, and encrypting a plaintext message by exclusive-or with the keystream, wherein decryption requires knowledge of both the exact clock frequencies and the exact time of encryption.
+Rivendicazione 7. Il metodo della Rivendicazione 1, comprendente inoltre la derivazione di un keystream crittografico dal vettore di fase Phi(t) = (f_1*t mod 1, f_2*t mod 1, ..., f_K*t mod 1) a uno specifico tempo t, dove f_1, f_2, ..., f_K sono le frequenze di K domini di clock asincroni, e la cifratura di un messaggio in chiaro mediante or-esclusivo con il keystream, in cui la decifratura richiede la conoscenza sia delle frequenze di clock esatte sia del momento esatto della cifratura.
 
-Claim 8. The method of Claim 7, further comprising phase-locked access windows wherein decryption is only possible when the relative phase between a specified pair of clock domains falls within a predetermined range.
+Rivendicazione 8. Il metodo della Rivendicazione 7, comprendente inoltre finestre di accesso phase-locked in cui la decifratura è possibile solo quando la fase relativa tra una coppia specificata di domini di clock rientra in un intervallo predeterminato.
 
-Claim 9. The instruction of Claim 3, further comprising companion instructions PHIGATE and PHIWEIGHT that respectively gate execution on a phase condition and return phase as a fixed-point arithmetic weight, enabling three computational paradigms: phase-gated computation, phase-weighted computation, and phase-encoded computation.
+Rivendicazione 9. L'istruzione della Rivendicazione 3, comprendente inoltre istruzioni complementari PHIGATE e PHIWEIGHT che rispettivamente condizionano l'esecuzione su una condizione di fase e restituiscono la fase come peso aritmetico a virgola fissa, abilitando tre paradigmi computazionali: computazione phase-gated, computazione phase-weighted e computazione phase-encoded.
 
-Claim 10. A portable software library implementing the methods of Claims 1, 2, 6, and 7 as a header-only C library with platform-specific timer backends for ARM, x86, and RISC-V architectures, providing phit extraction, compound sampling, entropy pool management, PRNG, lock-free routing, and self-test functionality without requiring hardware modification.
+Rivendicazione 10. Una libreria software portabile che implementa i metodi delle Rivendicazioni 1, 2, 6 e 7 come libreria C header-only con backend timer specifici per piattaforma per architetture ARM, x86 e RISC-V, fornendo estrazione di phit, campionamento composto, gestione del pool di entropia, PRNG, routing lock-free e funzionalità di auto-test senza richiedere modifiche hardware.

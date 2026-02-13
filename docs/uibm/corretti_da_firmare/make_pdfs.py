@@ -34,7 +34,8 @@ def create_pdf(text_file, pdf_file):
 files = [
     ('descrizione_clean.txt', 'descrizione_FINAL.pdf'),
     ('rivendicazioni_clean.txt', 'rivendicazioni_FINAL.pdf'),
-    ('riassunto_clean.txt', 'riassunto_FINAL.pdf')
+    ('riassunto_clean.txt', 'riassunto_FINAL.pdf'),
+    ('rivendicazioni_en_clean.txt', 'rivendicazioni_en_FINAL.pdf'),
 ]
 
 for txt, pdf in files:
