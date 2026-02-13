@@ -98,7 +98,7 @@ And there's an encryption scheme where the key is the temporal relationship betw
 - People who can poke holes in the statistical analysis
 - Ideas for applications I haven't thought of
 
-Code: [link to repo when public]
+Code: https://github.com/Alemusica/triphase-computation
 
 *Patent pending (Italian Patent Office, Feb 2026). Source available under BSL 1.1 — free for research, testing, personal projects. Converts to Apache 2.0 in 2030.*
 
